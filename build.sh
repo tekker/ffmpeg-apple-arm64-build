@@ -4,6 +4,9 @@
 ENABLE_FFPLAY=FALSE
 ENABLE_TOPAZ=FALSE
 
+ENABLE_OPENSSL=TRUE
+ENABLE_SRT=TRUE
+
 # set true for dependant features, export those needed in ffmpeg build script
  
 if [[ "${ENABLE_TOPAZ}" == "TRUE" ]]
@@ -26,6 +29,19 @@ if [[ "${ENABLE_FFPLAY}" == "TRUE" ]]
 then
     export ENABLE_FFPLAY=TRUE
 fi
+
+if [[ "${ENABLE_SRT}" == "TRUE" ]]
+then
+    # openssl is required for srt
+    ENABLE_OPENSSL=TRUE
+    export ENABLE_SRT=TRUE
+fi
+
+if [[ "${ENABLE_OPENSSL}" == "TRUE" ]]
+then
+    export ENABLE_OPENSSL=TRUE
+fi
+
 
 # get rid of macports - libiconv
 export PATH=`echo $PATH | sed 's/:/\n/g' | grep -v '/opt/local' | xargs | tr ' ' ':'`
@@ -229,14 +245,32 @@ then
     echoDurationInSections $START_TIME
 fi
 
+if [[ "${ENABLE_OPENSSL}" == "TRUE" ]]
+then
+    START_TIME=$(currentTimeInSeconds)
+    echoSection "compile openssl"
+    $SCRIPT_DIR/build-openssl.sh "$SCRIPT_DIR" "$WORKING_DIR" "$TOOL_DIR" "$CPUS" "1.1.1s" > "$WORKING_DIR/build-openssl.log" 2>&1
+    checkStatus $? "build openssl"
+    echoDurationInSections $START_TIME
+fi
+
+if [[ "${ENABLE_SRT}" == "TRUE" ]]
+then
+    START_TIME=$(currentTimeInSeconds)
+    echoSection "compile srt"
+    $SCRIPT_DIR/build-srt.sh "$SCRIPT_DIR" "$WORKING_DIR" "$TOOL_DIR" "$CPUS" "1.3.0" > "$WORKING_DIR/build-srt.log" 2>&1
+    checkStatus $? "build srt"
+    echoDurationInSections $START_TIME
+fi
+
 START_TIME=$(currentTimeInSeconds)
 if [[ "${ENABLE_TOPAZ}" == "TRUE" ]]
 then
-echoSection "compile ffmpeg with topaz"
-$SCRIPT_DIR/build-ffmpeg-topaz.sh "$SCRIPT_DIR" "$WORKING_DIR" "$TOOL_DIR" "$OUT_DIR" "$CPUS" "5.1.0.24" > "$WORKING_DIR/build-ffmpeg-topaz.log" 2>&1
+    echoSection "compile ffmpeg with topaz"
+    $SCRIPT_DIR/build-ffmpeg-topaz.sh "$SCRIPT_DIR" "$WORKING_DIR" "$TOOL_DIR" "$OUT_DIR" "$CPUS" "5.1.0.24" > "$WORKING_DIR/build-ffmpeg-topaz.log" 2>&1
 else
-echoSection "compile ffmpeg"
-$SCRIPT_DIR/build-ffmpeg.sh "$SCRIPT_DIR" "$WORKING_DIR" "$TOOL_DIR" "$OUT_DIR" "$CPUS" "5.1" > "$WORKING_DIR/build-ffmpeg.log" 2>&1
+    echoSection "compile ffmpeg"
+    $SCRIPT_DIR/build-ffmpeg.sh "$SCRIPT_DIR" "$WORKING_DIR" "$TOOL_DIR" "$OUT_DIR" "$CPUS" "5.1" > "$WORKING_DIR/build-ffmpeg.log" 2>&1
 fi
 
 checkStatus $? "build ffmpeg"
