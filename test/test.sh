@@ -94,9 +94,22 @@ $4/bin/ffmpeg -y -i "$2/test.mp4" -c:a "libopus" -vn "$3/test-opus.opus" > "$3/t
 checkStatus $? "test opus"
 echoDurationInSections $START_TIME
 
-# testi vorbis 
+# test vorbis 
 START_TIME=$(currentTimeInSeconds)
 echoSection "run test vorbis encoding"
 $4/bin/ffmpeg -y -i "$2/test.mp4" -c:a "libvorbis" -vn "$3/test-vorbis.ogg" > "$3/test-vorbis.log" 2>&1
 checkStatus $? "test vorbis"
 echoDurationInSections $START_TIME
+
+if [[ "${ENABLE_SRT}" == "TRUE" ]]
+then
+    # test srt
+    START_TIME=$(currentTimeInSeconds)
+    echoSection "run test srt encoding"
+    echoSection "  start srt listener"
+    $4/bin/ffmpeg -y -nostdin -re -i "srt://0.0.0.0:2345?mode=listener" -c:v "copy" -c:a "copy" -f mpegts "$3/test-srt.mp4" > "$3/test-srt-listener.log" 2>&1 &
+    echoSection "  encode using srt"
+    $4/bin/ffmpeg -y -re -i "$2/test.mp4" -c:v "copy" -c:a "copy" -f mpegts -muxrate 7M "srt://127.0.0.1:2345?pkt_size=1316&mode=caller" > "$3/test-srt-caller.log" 2>&1
+    checkStatus $? "test srt"
+    echoDurationInSections $START_TIME
+fi
