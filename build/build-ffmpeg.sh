@@ -49,7 +49,18 @@ configure_build () {
   export LDFLAGS="$FF_FLAGS"
   export CFLAGS="$FF_FLAGS"
 
+
   FFMPEG_EXTRAS=''
+
+  if [[ "${ENABLE_SRT}" == "TRUE" ]]
+  then
+       FFMPEG_EXTRAS="${FFMPEG_EXTRAS} --enable-libsrt"
+  fi
+
+  if [[ "${ENABLE_OPENSSL}" == "TRUE" ]]
+  then
+       FFMPEG_EXTRAS="${FFMPEG_EXTRAS} --enable-openssl --enable-nonfree"
+  fi
   
   if [[ "${ENABLE_FFPLAY}" == "TRUE" ]]
   then
